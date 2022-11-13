@@ -282,6 +282,91 @@ function addNewRole() {
         })
 };
 
+// Function to view all departments
+function viewAllDepartments() {
+    const sql = `
+    SELECT
+    id,
+    name AS 'Department'
+    FROM department
+    `;
+
+    db.query(sql, (err, department) => {
+        if (err) {
+            console.log(`There has been an error: ${err.sqlMessage}`)
+            return;
+        }
+
+        console.table(department);
+
+        // start inquirer over
+        init(selectOption)
+            .then(userSelectedObject => userSelected
+                (userSelectedObject.userSelected))
+            .catch((error) => {
+                console.log('Error', error);
+            });
+    });
+};
+
+// Function to add new department
+function addNewDepartment() {
+    //    Ask user for department name
+    inquirer.prompt([
+        {
+            type: 'input',
+            name: 'departmentName',
+            message: 'What is the name of the new department?'
+        }
+    ])
+        // Insert department name into db
+        .then(input => {
+            const sql = `
+        INSERT INTO
+        department (name)
+        VALUES (?)
+        `;
+
+            db.query(sql, input.departmentName, (err) => {
+                if (err) {
+                    console.log(`There has been an error: ${err.sqlMessage}`)
+                    return;
+                }
+
+                console.log(`Added ${input.departmentName} to database.`)
+
+                // start inquirer over
+                init(selectOption)
+                    .then(userSelectedObject => userSelected
+                        (userSelectedObject.userSelected))
+                    .catch((error) => {
+                        console.log('Error', error);
+                    });
+            });
+
+        })
+};
+
+function getAllDepartments() {
+    const sql = `SELECT * FROM department`;
+    return db.promise().query(sql);
+};
+
+function getAllEmployees() {
+    const sql = `SELECT * FROM employee`;
+    return db.promise().query(sql);
+};
+
+function getAllRoles() {
+    const sql = `SELECT * FROM role`;
+    return db.promise().query(sql);
+};
+
+// Exit app
+function exit() {
+    process.exit();
+};
+
 // Function to initialize app
 function init(options) {
     return inquirer.prompt(options)
