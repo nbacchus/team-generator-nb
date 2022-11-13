@@ -202,3 +202,95 @@ function userSelected(input) {
             break;
     }
 };
+
+// Function to view all roles
+function viewAllRoles() {
+    const sql = `
+    SELECT 
+    role.id, 
+    role.title AS 'Job Title',
+    department.name AS 'Department',
+    role.salary AS 'Salary'
+    FROM role
+    LEFT JOIN department ON role.department_id = department.id`;
+
+    db.query(sql, (err, role) => {
+        if (err) {
+            console.log(`There has been an error: ${err.sqlMessage}`)
+            return;
+        }
+
+        console.table(role);
+
+        // start inquirer over
+        init(selectOption)
+            .then(userSelectedObject => userSelected
+                (userSelectedObject.userSelected))
+            .catch((error) => {
+                console.log('Error', error);
+            });
+    });
+};
+
+// Function to add new role
+function addNewRole() {
+    getAllDepartments()
+        .then(([rows]) => {
+            inquirer.prompt([
+                {
+                    type: 'input',
+                    name: 'newRoleName',
+                    message: 'What is the name of the role?'
+                },
+                {
+                    type: 'input',
+                    name: 'newSalary',
+                    message: 'What is the salary of the role?'
+                },
+                {
+                    type: 'list',
+                    name: 'newRoleDepartment',
+                    message: 'Which department does the role belong to?',
+                    choices: rows.map(row => {
+                        return { name: row.name, value: row.id };
+                    })
+                }
+            ])
+                .then(input => {
+                    const sql = `
+            INSERT INTO
+            role (title, salary, department_id)
+            VALUES (?, ?, ?)
+            `;
+
+                    db.query(sql, [input.newRoleName, input.newSalary, input.newRoleDepartment], (err) => {
+                        if (err) {
+                            console.log(`There has been an error: ${err.sqlMessage}`)
+                            return;
+                        }
+
+                        console.log(`Added ${input.newRoleName}`);
+                        // start inquirer over
+                        init(selectOption)
+                            .then(userSelectedObject => userSelected
+                                (userSelectedObject.userSelected))
+                            .catch((error) => {
+                                console.log('Error', error);
+                            });
+                    });
+                });
+        })
+};
+
+// Function to initialize app
+function init(options) {
+    return inquirer.prompt(options)
+};
+
+// Call function to initialize app
+init(selectOption)
+    .then(userSelectedObject => userSelected
+        (userSelectedObject.userSelected))
+    .catch((error) => {
+        console.log('Error', error);
+    });
